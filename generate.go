@@ -11,6 +11,7 @@ import (
 
 var (
 	funcRE                   = regexp.MustCompile(`\s*{\n(\s+[^\n]+\n)+}`)
+	oneLineFuncRE            = regexp.MustCompile(`\s*{[^\n]+}`)
 	varRE                    = regexp.MustCompile(`\s*=[^;]+`)
 	doubleNewlineRE          = regexp.MustCompile(`(\r?\n)(\r?\n)(\r?\n)+`)
 	includeGuardUnderscoreRE = regexp.MustCompile(`[._-]+`)
@@ -46,6 +47,7 @@ func generateHeader(name string) {
 	}
 
 	hpp := funcRE.ReplaceAllString(string(cpp), ";")
+	hpp = oneLineFuncRE.ReplaceAllString(hpp, ";")
 	hpp = varRE.ReplaceAllString(hpp, "")
 	hpp = selfInclude.ReplaceAllString(hpp, "")
 	hpp = fmt.Sprintf("#ifndef %s\n#define %s\n\n%s\n\n#endif // %s", includeGuard, includeGuard, hpp, includeGuard)

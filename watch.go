@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	debouncerMut   = sync.Mutex{}
-	debouncerTimer *time.Timer
-	buildRoot      string
+	debouncerMut    = sync.Mutex{}
+	debouncerTimers = map[string]*time.Timer{}
+	buildRoot       string
 )
 
 var ignoreList = []string{".ccls-cache", "build", "out", "dist", "CMakeFiles", "vcpkg_installed", ".cache", "bin", "lib", "obj", "nbproject", ".vs", ".vscode", ".zed", ".idea", ".fleet"}
@@ -61,19 +61,27 @@ func watch(path string) {
 	<-sigs
 }
 
-func debouncedFullBuild() {
+func debouncedBuild(name string) {
 	debouncerMut.Lock()
-	defer debouncerMut.Unlock()
 
-	if debouncerTimer != nil {
-		debouncerTimer.Stop()
+	debouncerTimer, found := debouncerTimers[name]
+	if found {
+		if debouncerTimer != nil {
+			debouncerTimer.Stop()
+		}
 	}
 
 	debouncerTimer = time.NewTimer(500 * time.Millisecond)
-	select {
-	case <-debouncerTimer.C:
-		fullBuild()
+	debouncerTimers[name] = debouncerTimer
+
+	debouncerMut.Unlock()
+
+	_, ok := <-debouncerTimer.C
+	debouncerMut.Lock()
+	if ok {
+		generateHeader(name)
 	}
+	debouncerMut.Unlock()
 }
 
 func fullBuild() {
@@ -110,8 +118,8 @@ func devWatcher(watcher *fsnotify.Watcher, watchAllDirs func(string, fs.DirEntry
 			if err == nil && fileInfo.IsDir() {
 				_ = filepath.WalkDir(event.Name, watchAllDirs)
 			}
-			if event.Has(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) && !strings.HasSuffix(event.Name, ".hpp") {
-				debouncedFullBuild()
+			if event.Has(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) && strings.HasSuffix(event.Name, ".cpp") {
+				go debouncedBuild(event.Name)
 			}
 
 		case err, ok := <-watcher.Errors:
