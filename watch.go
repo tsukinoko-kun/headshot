@@ -21,7 +21,7 @@ var (
 	buildRoot       string
 )
 
-var ignoreList = []string{".ccls-cache", "build", "out", "dist", "CMakeFiles", "vcpkg_installed", ".cache", "bin", "lib", "obj", "nbproject", ".vs", ".vscode", ".zed", ".idea", ".fleet"}
+var ignoreList = []string{".ccls-cache", "build", "out", "dist", "vendored", "vendor", "CMakeFiles", "vcpkg_installed", ".cache", "bin", "lib", "obj", "nbproject", ".vs", ".vscode", ".zed", ".idea", ".fleet"}
 
 func watch(path string) {
 	buildRoot = path

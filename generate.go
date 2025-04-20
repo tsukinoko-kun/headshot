@@ -14,10 +14,10 @@ var (
 )
 
 var (
-	funcOneLineRE            = regexp.MustCompile(`((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?\w+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*)*)?\)(?:\s*const)?)\s*{(?:[^\n]+)}\n`)
-	funcRE                   = regexp.MustCompile(`\n((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?\w+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {1,}[^\n]+)|\n *)*\n}\n`)
-	func4RE                  = regexp.MustCompile(`\n( {4}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?\w+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {5,}[^\n]+)|\n *)*\n {4}}\n`)
-	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?\w+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?\w+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
+	funcOneLineRE            = regexp.MustCompile(`((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[*&\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:[^\n]+)}\n`)
+	funcRE                   = regexp.MustCompile(`\n((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {1,}[^\n]+)|\n *)*\n}\n`)
+	func4RE                  = regexp.MustCompile(`\n( {4}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {5,}[^\n]+)|\n *)*\n {4}}\n`)
+	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
 	varRE                    = regexp.MustCompile(`\n[^\s][^\n]+[^=<>]=[^=<>][^\n]+;`)
 	doubleNewlineRE          = regexp.MustCompile(`(\r?\n)(\r?\n)(\r?\n)+`)
 	emptyLineBlockBeginRE    = regexp.MustCompile(`{\n\n`)
@@ -96,7 +96,7 @@ func generateHeader(name string) {
 	})
 	hpp = varRE.ReplaceAllString(hpp, "")
 	hpp = selfInclude.ReplaceAllString(hpp, "")
-	hpp = fmt.Sprintf("#ifndef %s\n#define %s\n\n%s\n\n#endif // %s", includeGuard, includeGuard, hpp, includeGuard)
+	hpp = fmt.Sprintf("#ifndef %s\n#define %s\n\n%s\n\n#endif  // %s", includeGuard, includeGuard, hpp, includeGuard)
 	hpp = doubleNewlineRE.ReplaceAllString(hpp, "\n\n")
 	hpp = emptyLineBlockBeginRE.ReplaceAllString(hpp, "{\n")
 
