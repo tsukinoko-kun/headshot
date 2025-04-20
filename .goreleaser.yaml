@@ -26,7 +26,7 @@ universal_binaries:
 brews:
   - name: headshot
     homepage: https://github.com/tsukinoko-kun/headshot
-    description: ls replacement
+    description: C++ header file generator
     repository:
       owner: tsukinoko-kun
       name: homebrew-tap
