@@ -20,7 +20,7 @@ var (
 	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
 	varRE                    = regexp.MustCompile(`\n[^\s][^\n]+[^=<>]=[^=<>][^\n]+;`)
 	clayRE                   = regexp.MustCompile(`#define\s+CLAY_IMPLEMENTATION`)
-	sdlRE                    = regexp.MustCompile(`#include <SDL3/SDL_main.h>`)
+	includeRE                = regexp.MustCompile(`#include\s+([<"]([^>"]+)[>"])(\s*)`)
 	doubleNewlineRE          = regexp.MustCompile(`(\r?\n)(\r?\n)(\r?\n)+`)
 	emptyLineBlockBeginRE    = regexp.MustCompile(`{\n\n`)
 	includeGuardUnderscoreRE = regexp.MustCompile(`[._-]+`)
@@ -98,7 +98,23 @@ func generateHeader(name string) {
 	})
 	hpp = varRE.ReplaceAllString(hpp, "")
 	hpp = clayRE.ReplaceAllString(hpp, "")
-	hpp = sdlRE.ReplaceAllString(hpp, "")
+	hpp = includeRE.ReplaceAllStringFunc(hpp, func(s string) string {
+		sm := includeRE.FindStringSubmatch(s)
+		lib := sm[2]
+		if strings.HasSuffix(lib, "SDL_main.h") {
+			return ""
+		}
+		if strings.HasSuffix(lib, ".cpp") {
+			return fmt.Sprintf(
+				"#include %c%s.hpp%c%s",
+				sm[1][0],
+				lib[:len(lib)-4],
+				sm[1][len(sm[1])-1],
+				sm[3],
+			)
+		}
+		return s
+	})
 	hpp = selfInclude.ReplaceAllString(hpp, "")
 	hpp = fmt.Sprintf("#ifndef %s\n#define %s\n\n%s\n\n#endif  // %s", includeGuard, includeGuard, hpp, includeGuard)
 	hpp = doubleNewlineRE.ReplaceAllString(hpp, "\n\n")
