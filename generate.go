@@ -36,11 +36,11 @@ const (
 )
 
 var (
-	funcOneLineRE            = regexp.MustCompile(`((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[*&\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:[^\n]+)}\n`)
-	funcRE                   = regexp.MustCompile(`\n((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {1,}[^\n]+)|\n *)*\n}\n`)
-	func4RE                  = regexp.MustCompile(`\n( {4}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {5,}[^\n]+)|\n *)*\n {4}}\n`)
-	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
-	varRE                    = regexp.MustCompile(`\n[\w:*&<>]+(?:\s+[\w:*&<>]+)+\s*(?:=[^;]+)?;`)
+	funcOneLineRE            = regexp.MustCompile(`((?:\w+ +)*[\w:*&<>()]+\s+(?:const\s+)?[*&\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:[^\n]+)}\n`)
+	funcRE                   = regexp.MustCompile(`\n((?:\w+ +)*[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {1,}[^\n]+)|\n *)*\n}\n`)
+	func4RE                  = regexp.MustCompile(`\n( {4}(?:\w+ +)*[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {5,}[^\n]+)|\n *)*\n {4}}\n`)
+	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>()]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
+	varRE                    = regexp.MustCompile(`\n(?:\w+\s+)*[\w:*&<>]+\s+\w+\s*(?:=[^;]+)?;`)
 	clayRE                   = regexp.MustCompile(`#define\s+CLAY_IMPLEMENTATION`)
 	interfaceRE              = regexp.MustCompile(`\bHEADSHOT_INTERFACE\b`)
 	includeRE                = regexp.MustCompile(`#include\s+([<"]([^>"]+)[>"])(\s*)`)
