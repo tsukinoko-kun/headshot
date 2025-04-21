@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 )
 
 var (
@@ -21,10 +22,24 @@ var (
 	buildRoot       string
 )
 
-var ignoreList = []string{".ccls-cache", "build", "out", "dist", "vendored", "vendor", "CMakeFiles", "vcpkg_installed", ".cache", "bin", "lib", "obj", "nbproject", ".vs", ".vscode", ".zed", ".idea", ".fleet", ".git"}
+var (
+	ignoreMatcher gitignore.Matcher = nil
+	ignoreList                      = []string{".ccls-cache", "build", "out", "dist", "vendored", "vendor", "CMakeFiles", "vcpkg_installed", ".cache", "bin", "lib", "obj", "nbproject", ".vs", ".vscode", ".zed", ".idea", ".fleet", ".git"}
+)
+
+func toGitPath(path string) []string {
+	if filepath.IsAbs(path) {
+		relPath, err := filepath.Rel(buildRoot, path)
+		if err == nil {
+			path = relPath
+		}
+	}
+	return strings.Split(path, string(filepath.Separator))
+}
 
 func watch(path string) {
 	buildRoot = path
+	ignoreMatcher = getIgnoreMatcher()
 
 	fullBuild()
 
@@ -42,15 +57,19 @@ func watch(path string) {
 		if err != nil {
 			return err
 		}
-		splitPath := strings.Split(path, string(filepath.Separator))
+		if !d.IsDir() {
+			return nil
+		}
+		gitPath := toGitPath(path)
 		for _, ignoreStr := range ignoreList {
-			if slices.Contains(splitPath, ignoreStr) {
+			if slices.Contains(gitPath, ignoreStr) {
 				return filepath.SkipDir
 			}
 		}
-		if d.IsDir() {
-			_ = watcher.Add(path)
+		if ignoreMatcher != nil && ignoreMatcher.Match(gitPath, true) {
+			return filepath.SkipDir
 		}
+		_ = watcher.Add(path)
 		return nil
 	}
 
@@ -89,13 +108,23 @@ func fullBuild() {
 		if err != nil {
 			return err
 		}
-		splitPath := strings.Split(path, string(filepath.Separator))
-		for _, ignoreStr := range ignoreList {
-			if slices.Contains(splitPath, ignoreStr) {
-				return filepath.SkipDir
+		isDir := d.IsDir()
+		gitPath := toGitPath(path)
+		if isDir {
+			for _, ignoreStr := range ignoreList {
+				if slices.Contains(gitPath, ignoreStr) {
+					return filepath.SkipDir
+				}
 			}
 		}
-		if d.IsDir() {
+		if ignoreMatcher.Match(gitPath, isDir) {
+			if isDir {
+				return filepath.SkipDir
+			} else {
+				return nil
+			}
+		}
+		if isDir {
 			return nil
 		}
 		if !strings.HasSuffix(path, ".cpp") {
@@ -108,6 +137,7 @@ func fullBuild() {
 }
 
 func devWatcher(watcher *fsnotify.Watcher, watchAllDirs func(string, fs.DirEntry, error) error) {
+	ignoreFileName := filepath.Join(buildRoot, ".helmet")
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -117,9 +147,15 @@ func devWatcher(watcher *fsnotify.Watcher, watchAllDirs func(string, fs.DirEntry
 			fileInfo, err := os.Stat(event.Name)
 			if err == nil && fileInfo.IsDir() {
 				_ = filepath.WalkDir(event.Name, watchAllDirs)
-			}
-			if event.Has(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) && strings.HasSuffix(event.Name, ".cpp") {
-				go debouncedBuild(event.Name)
+			} else if event.Has(fsnotify.Write | fsnotify.Create | fsnotify.Remove | fsnotify.Rename) {
+				if strings.HasSuffix(event.Name, ".cpp") {
+					gitPath := toGitPath(event.Name)
+					if !ignoreMatcher.Match(gitPath, false) {
+						go debouncedBuild(event.Name)
+					}
+				} else if event.Name == ignoreFileName {
+					ignoreMatcher = getIgnoreMatcher()
+				}
 			}
 
 		case err, ok := <-watcher.Errors:
