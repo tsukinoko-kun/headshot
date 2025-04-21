@@ -13,6 +13,28 @@ var (
 	funcIgnoreKeywords = []string{"constexpr", "inline"}
 )
 
+const (
+	startInterface = `#ifndef %s
+#define %s
+#define HEADSHOT_INTERFACE
+
+`
+	start = `#ifndef %s
+#define %s
+
+`
+
+	endInterface = `
+
+#undef HEADSHOT_INTERFACE
+#endif  // %s
+`
+	end = `
+
+#endif  // %s
+`
+)
+
 var (
 	funcOneLineRE            = regexp.MustCompile(`((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[*&\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:[^\n]+)}\n`)
 	funcRE                   = regexp.MustCompile(`\n((?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {1,}[^\n]+)|\n *)*\n}\n`)
@@ -20,6 +42,7 @@ var (
 	func8RE                  = regexp.MustCompile(`\n( {8}(?:\w+ +)*[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*\((?:\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*(?:,\s*(?:const\s*)?[\w:*&<>]+\s+(?:const\s+)?[&*\w]+\s*)*)?\)(?:\s*const)?)\s*{(?:(?:\n {9,}[^\n]+)|\n *)*\n {8}}\n`)
 	varRE                    = regexp.MustCompile(`\n[^\s][^\n]+[^=<>]=[^=<>][^\n]+;`)
 	clayRE                   = regexp.MustCompile(`#define\s+CLAY_IMPLEMENTATION`)
+	interfaceRE              = regexp.MustCompile(`\bHEADSHOT_INTERFACE\b`)
 	includeRE                = regexp.MustCompile(`#include\s+([<"]([^>"]+)[>"])(\s*)`)
 	doubleNewlineRE          = regexp.MustCompile(`(\r?\n)(\r?\n)(\r?\n)+`)
 	emptyLineBlockBeginRE    = regexp.MustCompile(`{\n\n`)
@@ -107,16 +130,25 @@ func generateHeader(name string) {
 		if strings.HasSuffix(lib, ".cpp") {
 			return fmt.Sprintf(
 				"#include %c%s.hpp%c%s",
-				sm[1][0],
-				lib[:len(lib)-4],
-				sm[1][len(sm[1])-1],
-				sm[3],
+				sm[1][0],            // " or <
+				lib[:len(lib)-4],    // include file without .cpp extension
+				sm[1][len(sm[1])-1], // " or >
+				sm[3],               // trailing whitespace after include
 			)
 		}
 		return s
 	})
 	hpp = selfInclude.ReplaceAllString(hpp, "")
-	hpp = fmt.Sprintf("#ifndef %s\n#define %s\n\n%s\n\n#endif  // %s", includeGuard, includeGuard, hpp, includeGuard)
+	if interfaceRE.MatchString(hpp) {
+		hpp = fmt.Sprintf(startInterface, includeGuard, includeGuard) +
+			hpp +
+			fmt.Sprintf(endInterface, includeGuard)
+		hpp = interfaceRE.ReplaceAllString(hpp, "HEADSHOT_INTERFACE_"+includeGuard)
+	} else {
+		hpp = fmt.Sprintf(start, includeGuard, includeGuard) +
+			hpp +
+			fmt.Sprintf(end, includeGuard)
+	}
 	hpp = doubleNewlineRE.ReplaceAllString(hpp, "\n\n")
 	hpp = emptyLineBlockBeginRE.ReplaceAllString(hpp, "{\n")
 
