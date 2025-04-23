@@ -61,6 +61,7 @@ func generateHeaders(filenames []string) {
 }
 
 func generateHeader(name string) {
+	name = unixPath(name)
 	hppName := name[:len(name)-3] + "hpp"
 	selfInclude := regexp.MustCompile(fmt.Sprintf(`\s*#include ".*%s"\n`, path.Base(hppName)))
 	includeGuard := strings.ToUpper(includeGuardUnderscoreRE.ReplaceAllString(path.Base(hppName), "_"))
