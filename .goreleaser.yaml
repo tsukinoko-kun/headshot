@@ -2,6 +2,8 @@
 ---
 builds:
   - binary: headshot
+    ldflags:
+      - -X headshot/internal/update.Version={{ .Version }}
     goos:
       - darwin
       - linux
